@@ -32,11 +32,3 @@ func (m inmemory) Get(OrderUID string) (models.Order, error) {
 		return k, nil
 	}
 }
-
-func (m inmemory) Delete(OrderUID string) error {
-	if _, ok := m.store[OrderUID]; !ok {
-		return fmt.Errorf("could not find an entry with key %s in the cache", OrderUID)
-	}
-	delete(m.store, OrderUID)
-	return nil
-}

@@ -13,10 +13,16 @@ type noteRepository struct {
 	db *sqlx.DB
 }
 
-func NewPostgresDatabase(db *sqlx.DB) database.Database {
+func NewPostgresDatabase(host, port, user, password, dbname, sslmode string) (database.Database, error) {
+	db, err := sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", host, port, user, password, dbname, sslmode))
+
+	if err != nil {
+		return nil, fmt.Errorf("can't connect to bd: %v", err)
+	}
+
 	return &noteRepository{
 		db: db,
-	}
+	}, nil
 }
 
 func (n *noteRepository) Add(order models.Order) error {
@@ -47,7 +53,7 @@ func (n *noteRepository) Add(order models.Order) error {
 		_, err = n.db.Exec("INSERT INTO Items VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)",
 			v.ChrtID, order.OrderUID, v.TrackNumber, v.Price, v.Rid, v.Name, v.Sale, v.Size, v.TotalPrice, v.NmID, v.Brand, v.Status)
 		if err != nil {
-			return fmt.Errorf("can not insert item with id %s: %v", v.ChrtID, err)
+			return fmt.Errorf("can not insert item with id %d: %v", v.ChrtID, err)
 		}
 	}
 
