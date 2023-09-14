@@ -2,9 +2,9 @@ package natstransport
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"l0wb/store/cash"
-	"l0wb/store/database"
+	"l0wb/models"
 	"log"
 	"time"
 
@@ -13,28 +13,29 @@ import (
 )
 
 type NatsHandler struct {
-	casher cash.Casher
-	store  database.Database
+	s Orderer
 }
 
-func NewNatsHasher(casher cash.Casher, store database.Database) NatsHandler {
+type Orderer interface {
+	Add(models.Order) error
+	Get(OrderUID string) (models.Order, error)
+}
+
+func NewNatsHasher(s Orderer) NatsHandler {
 	return NatsHandler{
-		casher: casher,
-		store: store,
+		s: s,
 	}
 }
 
-func (n NatsHandler)RunNats(ctx context.Context, url string) error {
+func (n NatsHandler) RunNats(ctx context.Context, url string) error {
 	cont, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	nc, _ := nats.Connect(url)
 
 	defer nc.Close()
 
-	// Create a JetStream management interface
 	js, _ := jetstream.New(nc)
 
-	// Create a stream
 	_, err := js.CreateStream(cont, jetstream.StreamConfig{
 		Name:      "ORDERS",
 		Subjects:  []string{"ORDERS.*"},
@@ -63,10 +64,34 @@ func (n NatsHandler)RunNats(ctx context.Context, url string) error {
 			msg, err := iter.Next()
 			if err != nil {
 				log.Printf("stop?! %s\n", err)
-				break
+				return nil
 			}
 
 			fmt.Println(string(msg.Data()))
+
+			v := models.OrderStruct{}
+			err = json.Unmarshal(msg.Data(), &v)
+			if err != nil || v.OrderUID == nil {
+				log.Printf("Incorrect input data: %v\n", string(msg.Data()))
+				msg.Ack()
+				break
+			}
+
+			data, err := json.Marshal(v)
+			if err != nil {
+				log.Printf("Incorrect input data: %v\n", string(msg.Data()))
+				msg.Ack()
+				break
+			}
+
+			err = n.s.Add(models.Order{
+				OrderUID: *v.OrderUID,
+				Order:    data,
+			})
+			if err != nil {
+				log.Printf("cant add order: %v\n", err)
+			}
+
 			msg.Ack()
 		}
 	}

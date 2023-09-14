@@ -41,8 +41,8 @@ type Item struct {
     Status     int    `json:"status" db:"status"`
 }
 
-type Order struct {
-    OrderUID       string    `json:"order_uid" db:"order_uid"`
+type OrderStruct struct {
+    OrderUID       *string    `json:"order_uid" db:"order_uid"`
     TrackNumber    string    `json:"track_number" db:"track_number"`
     Entry          string    `json:"entry" db:"entry"`
     Delivery       *Delivery  `json:"delivery"`
@@ -56,4 +56,9 @@ type Order struct {
     SmID           int       `json:"sm_id" db:"sm_id"`
     DateCreated    time.Time `json:"date_created" db:"date_created"`
     OofShard       string    `json:"oof_shard" db:"oof_shard"`
+}
+
+type Order struct {
+	OrderUID string `json:"order_uid" db:"order_uid"`
+	Order    []byte `json:"data" db:"data"`
 }

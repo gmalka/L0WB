@@ -24,7 +24,7 @@ func NewOrderService(db database.Database, cash cash.Casher) (Orderer, error) {
 	}
 
 	for _, v := range orders {
-		err = db.Add(v)
+		err = cash.Add(v)
 		if err != nil {
 			return nil, fmt.Errorf("can not create order service: %v", err)
 		}
@@ -39,12 +39,12 @@ func NewOrderService(db database.Database, cash cash.Casher) (Orderer, error) {
 func(o orderService) Add(order models.Order) error {
 	err := o.cash.Add(order)
 	if err != nil {
-		return fmt.Errorf("can not add order: %v", err)
+		return fmt.Errorf("can not add order to cash: %v", err)
 	}
 
 	err = o.db.Add(order)
 	if err != nil {
-		return fmt.Errorf("can not add order: %v", err)
+		return fmt.Errorf("can not add order to store: %v", err)
 	}
 
 	return nil
