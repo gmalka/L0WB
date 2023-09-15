@@ -3,7 +3,6 @@ package natstransport
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"l0wb/models"
 	"log"
 	"time"
@@ -28,15 +27,29 @@ func NewNatsHasher(s Orderer) NatsHandler {
 }
 
 func (n NatsHandler) RunNats(ctx context.Context, url string) error {
+	var err error
+	var nc *nats.Conn
+
 	cont, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	nc, _ := nats.Connect(url)
 
+	nc, err = nats.Connect(url)
+	for err != nil {
+		select {
+		case <-cont.Done():
+			if err != nil {
+				return err
+			}
+		default:
+			nc, err = nats.Connect(url)
+		}
+		time.Sleep(time.Second)
+	}
 	defer nc.Close()
 
 	js, _ := jetstream.New(nc)
 
-	_, err := js.CreateStream(cont, jetstream.StreamConfig{
+	_, err = js.CreateStream(cont, jetstream.StreamConfig{
 		Name:      "ORDERS",
 		Subjects:  []string{"ORDERS.*"},
 		Retention: jetstream.WorkQueuePolicy,
@@ -66,8 +79,6 @@ func (n NatsHandler) RunNats(ctx context.Context, url string) error {
 				log.Printf("stop?! %s\n", err)
 				return nil
 			}
-
-			fmt.Println(string(msg.Data()))
 
 			v := models.OrderStruct{}
 			err = json.Unmarshal(msg.Data(), &v)

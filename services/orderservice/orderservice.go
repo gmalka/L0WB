@@ -5,6 +5,7 @@ import (
 	"l0wb/models"
 	"l0wb/store/cash"
 	"l0wb/store/database"
+	"log"
 )
 
 type orderService struct {
@@ -41,11 +42,13 @@ func(o orderService) Add(order models.Order) error {
 	if err != nil {
 		return fmt.Errorf("can not add order to cash: %v", err)
 	}
+	log.Printf("Added order with id %v in cash", order.OrderUID)
 
 	err = o.db.Add(order)
 	if err != nil {
 		return fmt.Errorf("can not add order to store: %v", err)
 	}
+	log.Printf("Added order with id %v in store", order.OrderUID)
 
 	return nil
 }
@@ -53,13 +56,17 @@ func(o orderService) Add(order models.Order) error {
 func(o orderService) Get(OrderUID string) (models.Order, error) {
 	order, err := o.cash.Get(OrderUID)
 	if err == nil {
+		log.Printf("Returned order with id %v from cash", order.OrderUID)
 		return order, nil
 	}
+	log.Printf("Cant find order with id %v in cash", order.OrderUID)
 
 	order, err = o.db.Get(OrderUID)
 	if err != nil {
+		log.Printf("Cant find order with id %v in store", order.OrderUID)
 		return models.Order{}, fmt.Errorf("can not get order: %v", err)
 	}
 
+	log.Printf("Returned order with id %v from store", order.OrderUID)
 	return order, nil
 }

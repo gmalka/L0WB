@@ -11,11 +11,6 @@ services:
       - migrate
     networks:
       - mynetwork
-  wait-for-it:
-    image: hello-world
-    depends_on:
-      nats:
-        condition: service_healthy
   db:
     image: postgres
     container_name: db_container
@@ -32,20 +27,17 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: always
   nats:
     image: 'synadia/nats-server:nightly'
     ports:
       - 4222:4222
     volumes:
       - ./.jetstream:/tmp/nats
-    entrypoint: ["/bin/nats-server", "-js", "-m", "8222"]
+    entrypoint: ["nats-server", "-js"]
     networks:
       - mynetwork
-    healthcheck:
-      test: "wget --server-response localhost:8222 | grep `200 OK` || exit 1"
-      interval: 5s
-      timeout: 5s
-      retries: 10
+    restart: always
   migrate:
     image: migrate/migrate
     container_name: migrate_container

@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/nats-io/nats.go"
 )
 
 func main() {
@@ -46,7 +45,13 @@ func main() {
 
 	n := natstransport.NewNatsHasher(orderservice)
 
-	go n.RunNats(ctx, nats.DefaultURL)
+	go func() {
+		err := n.RunNats(ctx, fmt.Sprintf("nats://%s:%s", os.Getenv("NATS_HOST"), os.Getenv("NATS_PORT")))
+		if err != nil {
+			log.Printf("Nats error: %v\n", err)
+			sig <- syscall.SIGINT
+		}
+	}()
 
 	h := resttransport.NewHandler(orderservice)
 
@@ -55,7 +60,13 @@ func main() {
 		Handler: h.Init(),
 	}
 
-	go serv.ListenAndServe()
+	go func() {
+		err := serv.ListenAndServe()
+		if err != nil {
+			log.Printf("Nats error: %v\n", err)
+			sig <- syscall.SIGINT
+		}
+	}()
 
 	for {
 		select {
