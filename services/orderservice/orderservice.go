@@ -26,6 +26,7 @@ func NewOrderService(db database.Database, cash cash.Casher) (Orderer, error) {
 
 	for _, v := range orders {
 		err = cash.Add(v)
+		log.Printf("Copy order with id %v from store to cash", v.OrderUID)
 		if err != nil {
 			return nil, fmt.Errorf("can not create order service: %v", err)
 		}
