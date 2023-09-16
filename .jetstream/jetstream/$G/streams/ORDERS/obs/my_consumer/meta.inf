@@ -1,1 +1,0 @@
-{"Created":"2023-09-16T08:31:17.538447526Z","Name":"my_consumer","durable_name":"my_consumer","name":"my_consumer","deliver_policy":"all","ack_policy":"explicit","ack_wait":30000000000,"max_deliver":-1,"replay_policy":"instant","max_waiting":512,"max_ack_pending":1000,"num_replicas":0}
