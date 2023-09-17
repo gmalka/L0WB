@@ -8,16 +8,16 @@ import (
 	"github.com/go-chi/chi"
 )
 
-type GetOrderer interface {
+type Orderer interface {
 	Add(models.Order) error
 	Get(OrderUID string) (models.Order, error)
 }
 
 type Handler struct {
-	s GetOrderer
+	s Orderer
 }
 
-func NewHandler(s GetOrderer) Handler {
+func NewHandler(s Orderer) Handler {
 	return Handler{
 		s: s,
 	}
