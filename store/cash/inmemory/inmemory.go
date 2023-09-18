@@ -9,13 +9,13 @@ import (
 
 type inmemory struct {
 	store map[string][]byte
-	m *sync.Mutex
+	m     *sync.Mutex
 }
 
 func NewInmemoryCasher() cash.Casher {
 	return inmemory{
 		store: make(map[string][]byte, 10),
-		m: &sync.Mutex{},
+		m:     &sync.Mutex{},
 	}
 }
 
@@ -38,7 +38,7 @@ func (m inmemory) Get(OrderUID string) (models.Order, error) {
 	} else {
 		return models.Order{
 			OrderUID: OrderUID,
-			Order: k,
+			Order:    k,
 		}, nil
 	}
 }

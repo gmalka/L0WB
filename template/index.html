@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Orders</title>
+</head>
+<body>
+    <label for="inputField">Введите текст:</label>
+    <input type="text" id="input" name="input"><br><br>
+    <button type="button" id="submit">Получить</button>
+
+    <p>{{ .}}</p>
+    <script>
+        var button = document.getElementById("submit")
+        button.addEventListener("click", function(event) {
+            var currentUrl = window.location.href;
+            var url = new URL(currentUrl);
+
+            var inputText = document.getElementById("input").value;
+
+            url.searchParams.set('uid', inputText);
+            
+            window.location.href = url.toString();
+        });
+    </script>
+</body>
+</html>

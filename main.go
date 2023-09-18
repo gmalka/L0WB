@@ -53,7 +53,7 @@ func main() {
 		}
 	}()
 
-	h := resttransport.NewHandler(orderservice)
+	h := resttransport.NewHandler(orderservice, "./template/")
 
 	serv := http.Server{
 		Addr:    fmt.Sprintf("%s:%s", os.Getenv("URL"), os.Getenv("PORT")),

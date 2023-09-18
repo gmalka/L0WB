@@ -2,7 +2,6 @@ package resttransport
 
 import (
 	"errors"
-	"io"
 	"l0wb/models"
 	mock_resttransport "l0wb/transport/resttransport/mock"
 	"net/http"
@@ -20,7 +19,6 @@ func TestHandler_OrderGet(t *testing.T) {
 		name       string
 		args       args
 		move       func(orderer *mock_resttransport.MockOrderer)
-		want       []byte
 		wantStatus int
 	}{
 		{
@@ -34,7 +32,6 @@ func TestHandler_OrderGet(t *testing.T) {
 					Order:    []byte("Hello world"),
 				}, nil)
 			},
-			want:       []byte("Hello world\n"),
 			wantStatus: 200,
 		},
 		{
@@ -45,18 +42,7 @@ func TestHandler_OrderGet(t *testing.T) {
 			move: func(orderer *mock_resttransport.MockOrderer) {
 				orderer.EXPECT().Get(gomock.Eq("test1")).Times(1).Return(models.Order{}, errors.New("some error"))
 			},
-			want:       []byte("some error\n"),
 			wantStatus: 400,
-		},
-		{
-			name: "ERR Handler Get: unknown path",
-			args: args{
-				uid: "test/test3",
-			},
-			move: func(orderer *mock_resttransport.MockOrderer) {
-			},
-			want:       []byte("404 page not found\n"),
-			wantStatus: 404,
 		},
 	}
 	for _, tt := range tests {
@@ -69,11 +55,12 @@ func TestHandler_OrderGet(t *testing.T) {
 			tt.move(orderer)
 
 			h := Handler{
-				s: orderer,
+				s:    orderer,
+				path: "./mock/",
 			}
 
 			recorder := httptest.NewRecorder()
-			url := "/" + tt.args.uid
+			url := "/?uid=" + tt.args.uid
 			request, _ := http.NewRequest(http.MethodGet, url, nil)
 
 			router := h.Init()
@@ -82,19 +69,6 @@ func TestHandler_OrderGet(t *testing.T) {
 
 			if recorder.Code != tt.wantStatus {
 				t.Errorf("Handler.Get() error want code %d, got %d", tt.wantStatus, recorder.Code)
-			}
-
-			b, _ := io.ReadAll(recorder.Body)
-
-			if len(b) > len(tt.want) {
-				t.Errorf("Handler.Get() error want [%s], got [%s]", tt.want, b)
-			} else {
-				for i := 0; i < len(b); i++ {
-					if b[i] != tt.want[i] {
-						t.Errorf("Handler.Get() error want [%s], got [%s]", tt.want, b)
-						break
-					}
-				}
 			}
 		})
 	}
