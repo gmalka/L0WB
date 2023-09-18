@@ -28,7 +28,7 @@ func NewPostgresDatabase(host, port, user, password, dbname, sslmode string) (da
 func (n *noteRepository) Add(order models.Order) error {
 	_, err := n.db.Exec("INSERT INTO Orders VALUES ($1,$2)",
 		order.OrderUID, order.Order)
-		
+
 	if err != nil {
 		return fmt.Errorf("can not insert order with id %s: %v", order.OrderUID, err)
 	}
@@ -38,21 +38,32 @@ func (n *noteRepository) Add(order models.Order) error {
 
 func (n *noteRepository) Get(OrderUID string) (models.Order, error) {
 	order := models.Order{}
-	err := n.db.Get(&order, `SELECT * FROM Orders WHERE order_uid=$1`, OrderUID)
-	if err != nil {
-		return models.Order{}, fmt.Errorf("can not get order with id %s: %v", OrderUID, err)
-	}
+	row := n.db.QueryRow(`SELECT * FROM Orders WHERE order_uid=$1`, OrderUID)
 
-	fmt.Println(order)
+	err := row.Scan(&order.OrderUID, &order.Order)
+	if err != nil {
+		return models.Order{}, fmt.Errorf("can not scan order with id %s: %v", OrderUID, err)
+	}
 
 	return order, nil
 }
 
 func (n *noteRepository) GetAll() ([]models.Order, error) {
 	orders := []models.Order{}
-	err := n.db.Select(&orders, `SELECT * FROM Orders`)
+	rows, err := n.db.Query(`SELECT * FROM Orders`)
 	if err != nil {
 		return nil, fmt.Errorf("can not get all orders: %v", err)
+	}
+
+	for rows.Next() {
+		order := models.Order{}
+
+		err := rows.Scan(&order.OrderUID, &order.Order)
+		if err != nil {
+			return nil, fmt.Errorf("can not scan order: %v", err)
+		}
+
+		orders = append(orders, order)
 	}
 
 	return orders, nil

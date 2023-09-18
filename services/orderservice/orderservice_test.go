@@ -173,6 +173,10 @@ func Test_orderService_Get(t *testing.T) {
 					OrderUID: "1",
 					Order:    []byte("Hello there"),
 				}, nil)
+				cash.EXPECT().Add(models.Order{
+					OrderUID: "1",
+					Order:    []byte("Hello there"),
+				}).Times(1).Return(nil)
 			},
 			want: models.Order{
 				OrderUID: "1",
